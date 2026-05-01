@@ -11,6 +11,8 @@ import { MetricsPanel } from './components/MetricsPanel';
 import { AlertsPanel } from './components/AlertsPanel';
 import { ActivityLogs } from './components/ActivityLogs';
 import { AdminPanel } from './components/AdminPanel';
+import { NeuralLab } from './components/NeuralLab';
+import { LandingPage } from './components/LandingPage';
 import { useMonitoring } from './hooks/useMonitoring';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, AlertOctagon } from 'lucide-react';
@@ -18,13 +20,30 @@ import { Search, AlertOctagon } from 'lucide-react';
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
-  const { systems, alerts, logs, metrics, updateSystemStatus, setAlerts, setLogs } = useMonitoring();
+  const [showDashboard, setShowDashboard] = useState(false);
+  const { 
+    systems, 
+    alerts, 
+    logs, 
+    metrics, 
+    maintenanceTasks,
+    predictionHistory,
+    completeMaintenanceTask,
+    triggerSimulation,
+    updateSystemStatus, 
+    setAlerts, 
+    setLogs 
+  } = useMonitoring();
 
   const filteredSystems = systems.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     s.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (!showDashboard) {
+    return <LandingPage onStart={() => setShowDashboard(true)} />;
+  }
 
   return (
     <div className="flex h-screen bg-[#0a0a0d] text-slate-300 font-sans selection:bg-emerald-500/30 overflow-hidden">
@@ -55,9 +74,9 @@ export default function App() {
               />
             </div>
             
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-950/30 text-rose-500 border border-rose-500/30 font-bold text-[9px] hover:bg-rose-500 hover:text-white transition-all uppercase tracking-widest active:scale-95" onClick={() => updateSystemStatus('boiler-e', 'error')}>
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-950/30 text-rose-500 border border-rose-500/30 font-bold text-[9px] hover:bg-rose-500 hover:text-white transition-all uppercase tracking-widest active:scale-95" onClick={() => triggerSimulation('critical')}>
               <AlertOctagon className="w-3 h-3" />
-              <span>Simulate Failure</span>
+              <span>Force Error</span>
             </button>
           </div>
         </header>
@@ -78,7 +97,11 @@ export default function App() {
                     <MetricsPanel data={metrics} />
                   </div>
                   <div className="lg:col-span-1">
-                    <AlertsPanel alerts={alerts} onClear={() => setAlerts([])} />
+                    <AlertsPanel 
+                      alerts={alerts} 
+                      predictionHistory={predictionHistory}
+                      onClear={() => setAlerts([])} 
+                    />
                   </div>
                 </div>
 
@@ -113,7 +136,11 @@ export default function App() {
                  exit={{ opacity: 0 }}
                  className="max-w-4xl mx-auto h-full"
                >
-                 <AlertsPanel alerts={alerts} onClear={() => setAlerts([])} />
+                 <AlertsPanel 
+                   alerts={alerts} 
+                   predictionHistory={predictionHistory}
+                   onClear={() => setAlerts([])} 
+                 />
                </motion.div>
             )}
 
@@ -137,9 +164,27 @@ export default function App() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="max-w-4xl mx-auto h-full"
+                className="max-w-6xl mx-auto h-full"
               >
-                <AdminPanel systems={systems} onUpdateStatus={updateSystemStatus} />
+                <AdminPanel 
+                  systems={systems} 
+                  maintenanceTasks={maintenanceTasks} 
+                  onUpdateStatus={updateSystemStatus} 
+                  onCompleteMaintenance={completeMaintenanceTask}
+                  onTriggerSimulation={triggerSimulation}
+                />
+              </motion.div>
+            )}
+
+            {activeTab === 'neural' && (
+              <motion.div
+                key="neural"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="h-full"
+              >
+                <NeuralLab />
               </motion.div>
             )}
           </AnimatePresence>

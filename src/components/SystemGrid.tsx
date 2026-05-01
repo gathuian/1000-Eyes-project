@@ -12,12 +12,32 @@ interface SystemGridProps {
 }
 
 export function SystemGrid({ systems }: SystemGridProps) {
+  const [typeFilter, setTypeFilter] = React.useState<string>('ALL');
+
+  const types = ['ALL', ...Array.from(new Set(systems.map(s => s.type)))];
+
+  const filteredSystems = systems.filter(s => typeFilter === 'ALL' || s.type === typeFilter);
+
   return (
     <div className="bg-[#111116] border border-slate-800 flex flex-col h-full">
       <div className="p-3 border-b border-slate-800 flex justify-between items-center bg-[#15151c]">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-          <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">System Status Matrix</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">System Status Matrix</span>
+          </div>
+          
+          <select 
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="bg-[#0d0d12] border border-slate-700 text-[9px] text-slate-400 px-2 py-0.5 focus:outline-none focus:border-emerald-500 uppercase tracking-tighter rounded cursor-pointer transition-colors hover:border-slate-500"
+          >
+            {types.map(t => (
+              <option key={t} value={t} className="bg-[#111116] text-slate-300">
+                {t.replace('_', ' ')}
+              </option>
+            ))}
+          </select>
         </div>
         <span className="text-[9px] font-mono text-emerald-500">LIVE_PULSE.STREAM</span>
       </div>
@@ -35,7 +55,7 @@ export function SystemGrid({ systems }: SystemGridProps) {
           </thead>
           <tbody className="font-mono">
             <AnimatePresence initial={false} mode="popLayout">
-              {systems.map((system) => (
+              {filteredSystems.map((system) => (
                 <motion.tr 
                    key={system.id}
                    initial={{ opacity: 0 }}

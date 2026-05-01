@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { LayoutDashboard, Bell, Terminal, ShieldAlert, Cpu } from 'lucide-react';
+import { LayoutDashboard, Bell, Terminal, ShieldAlert, Cpu, BrainCircuit } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
@@ -17,6 +17,7 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     { id: 'systems', icon: Cpu, label: 'SYSTEM NODES' },
     { id: 'alerts', icon: Bell, label: 'INCIDENT LOGS' },
     { id: 'logs', icon: Terminal, label: 'METRIC ANALYTICS' },
+    { id: 'neural', icon: BrainCircuit, label: 'NEURAL LAB' },
     { id: 'admin', icon: ShieldAlert, label: 'ADMIN CONTROL' },
   ];
 

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { System, Alert, LogEntry, MetricData, SystemStatus } from '../types';
+import { System, Alert, LogEntry, MetricData, SystemStatus, MaintenanceTask, PredictionHistory } from '../types';
 import { INITIAL_SYSTEMS } from '../constants';
 
 export function useMonitoring() {
@@ -12,7 +12,61 @@ export function useMonitoring() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [metrics, setMetrics] = useState<MetricData[]>([]);
+  const [maintenanceTasks, setMaintenanceTasks] = useState<MaintenanceTask[]>([
+    { id: 'm1', systemId: 'pump-a', systemName: 'Water Pump A', date: '2026-05-10', task: 'Seal Replacement', status: 'pending' },
+    { id: 'm2', systemId: 'gen-b', systemName: 'Generator B', date: '2026-05-15', task: 'Oil Change & Filter', status: 'pending' },
+  ]);
+  const [predictionHistory, setPredictionHistory] = useState<PredictionHistory[]>([]);
   const metricsRef = useRef<MetricData[]>([]);
+
+  const addMaintenanceTask = useCallback((task: Omit<MaintenanceTask, 'id' | 'status'>) => {
+    const newTask: MaintenanceTask = {
+      ...task,
+      id: Math.random().toString(36).substr(2, 9),
+      status: 'pending'
+    };
+    setMaintenanceTasks(prev => [newTask, ...prev]);
+  }, []);
+
+  const completeMaintenanceTask = useCallback((id: string) => {
+    setMaintenanceTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'completed' } : t));
+  }, []);
+
+  const triggerSimulation = useCallback((type: 'safe' | 'critical' | 'warning' | 'recovery') => {
+    setSystems(prev => prev.map(s => {
+      let update = {};
+      if (type === 'critical') {
+        const isTarget = Math.random() > 0.5 || s.id === 'boiler-e';
+        update = isTarget ? { temp: 98.5, pressure: 135, status: 'error', value: 95 } : {};
+      }
+      if (type === 'warning') {
+        const isTarget = Math.random() > 0.3;
+        update = isTarget ? { temp: 76, pressure: 99, status: 'warning', value: 85 } : {};
+      }
+      if (type === 'recovery' || type === 'safe') {
+        update = { 
+          temp: 35 + (Math.random() * 5), 
+          pressure: 65 + (Math.random() * 5), 
+          status: 'active',
+          value: 70 + (Math.random() * 10)
+        };
+      }
+      return { ...s, ...update, lastUpdated: new Date().toISOString() };
+    }));
+    
+    // Clear alerts if safe mode is triggered for a "fresh start" (optional, but requested for 'safe mode showing safe')
+    if (type === 'safe') {
+      setAlerts([]);
+    }
+
+    const log: LogEntry = {
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: new Date().toLocaleTimeString(),
+        event: `${type.toUpperCase()}_SIM_TRIGGERED`,
+        details: type === 'safe' ? 'Full system baseline reset initiated.' : `Operator initiated ${type} simulation bypass.`
+    };
+    setLogs(prev => [log, ...prev].slice(0, 100));
+  }, []);
 
   // Initialize metrics
   useEffect(() => {
@@ -124,6 +178,18 @@ export function useMonitoring() {
         const issues = detectAnomaly(updatedSys);
         const prediction = predictFailure(updatedSys);
 
+        // Record prediction history occasionally
+        if (Math.random() > 0.9) {
+           const historyEntry: PredictionHistory = {
+             id: Math.random().toString(36).substr(2, 9),
+             systemId: s.id,
+             timestamp: new Date().toLocaleTimeString(),
+             prediction: prediction.note,
+             riskLevel: prediction.risk
+           };
+           setPredictionHistory(prev => [historyEntry, ...prev].slice(0, 50));
+        }
+
         let finalStatus = s.status;
         if (issues.length > 0) {
           finalStatus = issues.some(i => i.toLowerCase().includes('high')) ? 'error' : 'warning';
@@ -162,6 +228,11 @@ export function useMonitoring() {
     alerts,
     logs,
     metrics,
+    maintenanceTasks,
+    predictionHistory,
+    addMaintenanceTask,
+    completeMaintenanceTask,
+    triggerSimulation,
     updateSystemStatus,
     setAlerts,
     setLogs
