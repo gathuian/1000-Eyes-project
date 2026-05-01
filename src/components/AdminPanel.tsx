@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import React, { useState } from 'react';
 import { System, SystemStatus, MaintenanceTask } from '../types';
-import { AlertOctagon, Terminal, Calendar, PlayCircle, CheckCircle2, ShieldCheck, ZapOff, Activity, RefreshCw } from 'lucide-react';
+import { AlertOctagon, Terminal, Calendar, PlayCircle, CheckCircle2, ShieldCheck, ZapOff, Activity, RefreshCw, Plus, X } from 'lucide-react';
 
 interface AdminPanelProps {
   systems: System[];
@@ -12,9 +13,25 @@ interface AdminPanelProps {
   onUpdateStatus: (id: string, status: SystemStatus) => void;
   onCompleteMaintenance: (id: string) => void;
   onTriggerSimulation: (type: 'safe' | 'critical' | 'warning' | 'recovery') => void;
+  onAddSystem: (system: Omit<System, 'id' | 'status' | 'lastUpdated' | 'trend' | 'riskLevel' | 'prediction'>) => void;
 }
 
-export function AdminPanel({ systems, maintenanceTasks, onUpdateStatus, onCompleteMaintenance, onTriggerSimulation }: AdminPanelProps) {
+export function AdminPanel({ systems, maintenanceTasks, onUpdateStatus, onCompleteMaintenance, onTriggerSimulation, onAddSystem }: AdminPanelProps) {
+  const [newMachine, setNewMachine] = useState({ name: '', type: 'PUMP', location: 'Section A', unit: 'RPM' });
+  const [isAdding, setIsAdding] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMachine.name) return;
+    onAddSystem({
+      ...newMachine,
+      temp: 40,
+      pressure: 70,
+      value: 65,
+    });
+    setNewMachine({ name: '', type: 'PUMP', location: 'Section A', unit: 'RPM' });
+    setIsAdding(false);
+  };
   return (
     <div className="bg-[#111116] border border-slate-800 flex flex-col h-full font-sans overflow-hidden">
       <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-[#15151c] shrink-0">
@@ -71,7 +88,74 @@ export function AdminPanel({ systems, maintenanceTasks, onUpdateStatus, onComple
         <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* System Control List */}
           <div>
-            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Node_Bypass_Control</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Node_Bypass_Control</h3>
+              <button 
+                onClick={() => setIsAdding(!isAdding)}
+                className="flex items-center gap-1 text-[9px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded hover:bg-emerald-500/20 transition-colors"
+              >
+                {isAdding ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                {isAdding ? 'CANCEL' : 'REGISTER_NEW_NODE'}
+              </button>
+            </div>
+
+            {isAdding && (
+              <form onSubmit={handleSubmit} className="mb-6 p-4 bg-[#15151c] border border-emerald-500/20 rounded space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[8px] text-slate-500 uppercase font-bold tracking-widest">Node Name</label>
+                    <input 
+                      type="text" 
+                      value={newMachine.name}
+                      onChange={(e) => setNewMachine({...newMachine, name: e.target.value})}
+                      placeholder="e.g. Pump Gamma"
+                      className="bg-[#0d0d12] border border-slate-800 p-2 text-xs text-white rounded focus:border-emerald-500/50 outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[8px] text-slate-500 uppercase font-bold tracking-widest">Category</label>
+                    <select 
+                      value={newMachine.type}
+                      onChange={(e) => setNewMachine({...newMachine, type: e.target.value})}
+                      className="bg-[#0d0d12] border border-slate-800 p-2 text-xs text-white rounded focus:border-emerald-500/50 outline-none"
+                    >
+                      <option value="PUMP">WATER_PUMP</option>
+                      <option value="GENERATOR">POWER_GENERATOR</option>
+                      <option value="VALVE">PRESSURE_VALVE</option>
+                      <option value="BOILER">HEAT_EXCHANGER</option>
+                      <option value="TURBINE">TURBINE_UNIT</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[8px] text-slate-500 uppercase font-bold tracking-widest">Sector</label>
+                    <input 
+                      type="text" 
+                      value={newMachine.location}
+                      onChange={(e) => setNewMachine({...newMachine, location: e.target.value})}
+                      placeholder="e.g. Wing B"
+                      className="bg-[#0d0d12] border border-slate-800 p-2 text-xs text-white rounded focus:border-emerald-500/50 outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[8px] text-slate-500 uppercase font-bold tracking-widest">Primary Unit</label>
+                    <input 
+                      type="text" 
+                      value={newMachine.unit}
+                      onChange={(e) => setNewMachine({...newMachine, unit: e.target.value})}
+                      placeholder="e.g. PSI"
+                      className="bg-[#0d0d12] border border-slate-800 p-2 text-xs text-white rounded focus:border-emerald-500/50 outline-none"
+                    />
+                  </div>
+                </div>
+                <button 
+                  type="submit"
+                  className="w-full py-2 bg-emerald-500 text-slate-900 font-bold text-[10px] uppercase tracking-widest rounded hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20"
+                >
+                  Confirm Registration
+                </button>
+              </form>
+            )}
+
             <div className="space-y-3">
               {systems.map((system) => (
                 <div key={system.id} className="bg-[#0d0d12] border border-slate-800/60 p-3 flex flex-col gap-3 group hover:border-slate-700 transition-all rounded">

@@ -223,6 +223,29 @@ export function useMonitoring() {
     return () => clearInterval(interval);
   }, [updateSystemStatus, addAlert]);
 
+  const addSystem = useCallback((newSystem: Omit<System, 'id' | 'status' | 'lastUpdated' | 'trend' | 'riskLevel' | 'prediction'>) => {
+    const id = `${newSystem.name.toLowerCase().replace(/\s+/g, '-')}-${Math.random().toString(36).substr(2, 5)}`;
+    const system: System = {
+      ...newSystem,
+      id,
+      status: 'active',
+      lastUpdated: new Date().toISOString(),
+      trend: 'stable',
+      riskLevel: 'low',
+      prediction: 'Awaiting baseline data...'
+    };
+    setSystems(prev => [...prev, system]);
+    
+    // Log the integration
+    const log: LogEntry = {
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: new Date().toLocaleTimeString(),
+      event: 'NEW_HARDWARE_SYNC',
+      details: `System [${newSystem.name}] successfully integrated into Mesh Node.`
+    };
+    setLogs(prev => [log, ...prev].slice(0, 100));
+  }, []);
+
   return {
     systems,
     alerts,
@@ -233,6 +256,7 @@ export function useMonitoring() {
     addMaintenanceTask,
     completeMaintenanceTask,
     triggerSimulation,
+    addSystem,
     updateSystemStatus,
     setAlerts,
     setLogs

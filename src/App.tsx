@@ -12,6 +12,7 @@ import { AlertsPanel } from './components/AlertsPanel';
 import { ActivityLogs } from './components/ActivityLogs';
 import { AdminPanel } from './components/AdminPanel';
 import { NeuralLab } from './components/NeuralLab';
+import { DeploymentGuide } from './components/DeploymentGuide';
 import { LandingPage } from './components/LandingPage';
 import { useMonitoring } from './hooks/useMonitoring';
 import { motion, AnimatePresence } from 'motion/react';
@@ -30,6 +31,7 @@ export default function App() {
     predictionHistory,
     completeMaintenanceTask,
     triggerSimulation,
+    addSystem,
     updateSystemStatus, 
     setAlerts, 
     setLogs 
@@ -158,6 +160,18 @@ export default function App() {
               </motion.div>
             )}
 
+            {activeTab === 'guide' && (
+              <motion.div
+                key="guide"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="h-full"
+              >
+                <DeploymentGuide />
+              </motion.div>
+            )}
+
             {activeTab === 'admin' && (
               <motion.div
                 key="admin"
@@ -172,6 +186,7 @@ export default function App() {
                   onUpdateStatus={updateSystemStatus} 
                   onCompleteMaintenance={completeMaintenanceTask}
                   onTriggerSimulation={triggerSimulation}
+                  onAddSystem={addSystem}
                 />
               </motion.div>
             )}
